@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Chat UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        /* Light mode styles */
+        body.light {
+            background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 50%, #F0F8FF 100%);
+            color: #2c3e50;
+        }
+
+        /* Dark mode styles */
+body.dark {
+    background: linear-gradient(135deg, #0a0a1a 0%, #111128 50%, #1a0d4a 100%);
+    color: #e0e0e0;
+}
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Animated background elements */
+        .background-canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Constellation styles for dark mode */
+        .constellation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        .constellation-star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+        }
+
+        .constellation-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform-origin: left center;
+            animation: shimmer 4s infinite;
+        }
+
+        .constellation-name {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            animation: glow 2s infinite alternate;
+        }
+
+        /* Cloud styles for light mode */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+            opacity: 0.7;
+            animation: float-cloud 20s infinite linear;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+        }
+
+        .cloud1 {
+            width: 80px;
+            height: 30px;
+            top: 20%;
+            left: -100px;
+        }
+
+        .cloud1::before {
+            width: 50px;
+            height: 40px;
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud1::after {
+            width: 40px;
+            height: 35px;
+            top: -15px;
+            right: 10px;
+        }
+
+        .cloud2 {
+            width: 60px;
+            height: 25px;
+            top: 40%;
+            left: -80px;
+            animation-delay: -10s;
+        }
+
+        .cloud2::before {
+            width: 35px;
+            height: 30px;
+            top: -15px;
+            left: 8px;
+        }
+
+        .cloud2::after {
+            width: 30px;
+            height: 25px;
+            top: -10px;
+            right: 8px;
+        }
+
+        .cloud3 {
+            width: 100px;
+            height: 35px;
+            top: 60%;
+            left: -120px;
+            animation-delay: -15s;
+        }
+
+        .cloud3::before {
+            width: 60px;
+            height: 45px;
+            top: -25px;
+            left: 15px;
+        }
+
+        .cloud3::after {
+            width: 50px;
+            height: 40px;
+            top: -20px;
+            right: 15px;
+        }
+
+        .cloud4 {
+            width: 70px;
+            height: 28px;
+            top: 80%;
+            left: -90px;
+            animation-delay: -5s;
+        }
+
+        .cloud4::before {
+            width: 45px;
+            height: 35px;
+            top: -18px;
+            left: 12px;
+        }
+
+        .cloud4::after {
+            width: 35px;
+            height: 30px;
+            top: -12px;
+            right: 12px;
+        }
+
+        /* Animations */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+            100% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+        }
+
+        @keyframes float-cloud {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+        }
+
+        /* Hide clouds in dark mode and constellations in light mode */
+        body.dark .cloud {
+            display: none;
+        }
+
+        body.light .constellation {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .chat-title {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid;
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.light .theme-toggle {
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        body.dark .theme-toggle {
+            border-color: #74b9ff;
+            color: #74b9ff;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        /* Chat container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.sent {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        body.light .message-avatar {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid #3498db;
+        }
+
+        body.dark .message-avatar {
+            background: rgba(116, 185, 255, 0.1);
+            border: 2px solid #74b9ff;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        body.light .message-content {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+
+        body.dark .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(116, 185, 255, 0.2);
+        }
+
+        .message.sent .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Input area */
+        .input-area {
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        body.light .input-container {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+
+        body.dark .input-container {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(116, 185, 255, 0.2);
+        }
+
+        .file-upload-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #25D366;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .file-upload-btn:hover {
+            background: rgba(37, 211, 102, 0.1);
+            transform: scale(1.1);
+        }
+
+        body.light .file-upload-btn {
+            color: #25D366;
+        }
+
+        body.dark .file-upload-btn {
+            color: #00A884;
+        }
+
+        .file-upload-input {
+            display: none;
+        }
+
+        .message-input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: inherit;
+        }
+
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.light .message-input::placeholder {
+            color: rgba(44, 62, 80, 0.5);
+        }
+
+        .send-button {
+            background: #25D366;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        body.dark .send-button {
+            background: #00A884;
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Space emojis for avatars */
+        .space-emoji {
+            font-size: 24px;
+        }
+        /* Shining stars and galaxy effects */
+.shining-star {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, #ffffff 0%, rgba(255, 255, 255, 0.8) 30%, transparent 70%);
+    border-radius: 50%;
+    animation: shine 3s infinite;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.galaxy-dust {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse 800px 300px at 20% 30%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 600px 200px at 80% 70%, rgba(72, 61, 139, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse 400px 150px at 50% 50%, rgba(138, 43, 226, 0.08) 0%, transparent 50%);
+    animation: galaxyRotate 60s linear infinite;
+}
+
+.milky-way {
+    position: absolute;
+    width: 120%;
+    height: 30px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.05) 10%, 
+        rgba(147, 112, 219, 0.1) 25%, 
+        rgba(138, 43, 226, 0.15) 40%, 
+        rgba(72, 61, 139, 0.2) 50%, 
+        rgba(138, 43, 226, 0.15) 60%, 
+        rgba(147, 112, 219, 0.1) 75%, 
+        rgba(255, 255, 255, 0.05) 90%, 
+        transparent 100%);
+    top: 40%;
+    left: -10%;
+    transform: rotate(-15deg);
+    animation: milkyWayFlow 40s linear infinite;
+    opacity: 0.6;
+}
+
+.shooting-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: linear-gradient(45deg, #ffffff, #87CEEB);
+    border-radius: 50%;
+    box-shadow: 0 0 6px #ffffff, 0 0 12px #87CEEB;
+    animation: shootingStar 8s linear infinite;
+}
+
+.shooting-star::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(45deg, #ffffff, transparent);
+    transform: translate(-50%, -50%) rotate(45deg);
+    animation: shootingTail 8s linear infinite;
+}
+
+/* Animations */
+@keyframes shine {
+    0%, 100% { 
+        opacity: 0.3; 
+        transform: scale(1); 
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.5); 
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 255, 255, 0.6);
+    }
+}
+
+@keyframes galaxyRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes milkyWayFlow {
+    0% { transform: rotate(-15deg) translateX(-20px); opacity: 0.6; }
+    50% { opacity: 0.8; }
+    100% { transform: rotate(-15deg) translateX(20px); opacity: 0.6; }
+}
+
+@keyframes shootingStar {
+    0% { 
+        transform: translateX(-100px) translateY(-100px); 
+        opacity: 0; 
+    }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { 
+        transform: translateX(100vw) translateY(100vh); 
+        opacity: 0; 
+    }
+}
+
+@keyframes shootingTail {
+    0% { width: 0; }
+    10% { width: 80px; }
+    90% { width: 100px; }
+    100% { width: 0; }
+}
+        /* Mobile and Tablet Responsiveness */
+@media (max-width: 768px) {
+    .header {
+        padding: 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .chat-title {
+        font-size: 20px;
+    }
+    
+    .theme-toggle {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    
+    .chat-container {
+        padding: 0 15px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+        padding: 12px 15px;
+    }
+    
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    .input-container {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .message-input {
+        font-size: 14px;
+    }
+    
+    .send-button {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    /* Scale down constellations for mobile */
+    .constellation-star {
+        width: 2px;
+        height: 2px;
+    }
+    
+    .constellation-name {
+        font-size: 10px;
+    }
+    
+    /* Adjust clouds for mobile */
+    .cloud1, .cloud2, .cloud3, .cloud4 {
+        transform: scale(0.8);
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 10px;
+    }
+    
+    .chat-title {
+        font-size: 18px;
+    }
+    
+    .theme-toggle {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .message-content {
+        max-width: 90%;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    .message-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+    }
+    
+    .input-container {
+        padding: 10px;
+    }
+    
+    .send-button {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+    
+    .file-upload-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+    }
+    
+@media (max-width: 768px) {
+    .shining-star {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .milky-way {
+        height: 20px;
+    }
+    
+    .shooting-star {
+        width: 1px;
+        height: 1px;
+    }
+}
+}
+    </style>
+</head>
+<body class="dark">
+    <div class="container">
+        <!-- Animated background -->
+        <div class="background-canvas" id="background-canvas">
+            <!-- Constellations for dark mode -->
+            <div class="constellation" id="constellation"></div>
+            
+            <!-- Clouds for light mode -->
+            <div class="cloud cloud1"></div>
+            <div class="cloud cloud2"></div>
+            <div class="cloud cloud3"></div>
+            <div class="cloud cloud4"></div>
+        </div>
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="chat-title">
+    <span>🌌</span>
+    VyomNetra
+</div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="theme-icon">☀️</span>
+                <span id="theme-text">Light Mode</span>
+            </button>
+        </div>
+
+        <!-- Chat container -->
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="message">
+                    <div class="message-avatar">
+                        <span class="space-emoji">🪐</span>
+                    </div>
+                    <div class="message-content">
+                        Welcome to Space Chat! 🚀 How's your journey through the cosmos today?
+                    </div>
+                </div>
+                
+                <div class="message sent">
+                    <div class="message-avatar">
+                        <span class="space-emoji">🛸</span>
+                    </div>
+                    <div class="message-content">
+                        Amazing! Just discovered a new galaxy. The stars are so bright tonight! ✨
+                    </div>
+                </div>
+                
+                <div class="message">
+                    <div class="message-avatar">
+                        <span class="space-emoji">🌟</span>
+                    </div>
+                    <div class="message-content">
+                        That's incredible! I love stargazing. Did you see any shooting stars?
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-container">
+                    <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+                        📎
+                    </button>
+                    <input type="file" id="fileInput" class="file-upload-input" 
+                           accept=".txt,.doc,.docx,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.webp"
+                           onchange="handleFileUpload(event)">
+                    <input type="text" class="message-input" placeholder="Type your message..." id="messageInput">
+                    <button class="send-button" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constellation data with star positions and connections
+       const constellations = [
+    {
+        name: "Orion",
+        stars: [
+            {x: 30, y: 22}, {x: 37, y: 15}, {x: 45, y: 30},
+            {x: 22, y: 37}, {x: 30, y: 45}, {x: 37, y: 52}, {x: 52, y: 45}
+        ],
+        connections: [
+            [0, 1], [1, 2], [0, 3], [3, 4], [4, 5], [2, 6], [4, 6]
+        ],
+        position: {x: 10, y: 10}
+    },
+    {
+        name: "Ursa Major",
+        stars: [
+            {x: 15, y: 15}, {x: 30, y: 12}, {x: 45, y: 18},
+            {x: 60, y: 22}, {x: 52, y: 37}, {x: 37, y: 42}, {x: 22, y: 37}
+        ],
+        connections: [
+            [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0]
+        ],
+        position: {x: 50, y: 20}
+    },
+    {
+        name: "Cassiopeia",
+        stars: [
+            {x: 15, y: 22}, {x: 30, y: 15}, {x: 45, y: 30},
+            {x: 60, y: 12}, {x: 75, y: 27}
+        ],
+        connections: [
+            [0, 1], [1, 2], [2, 3], [3, 4]
+        ],
+        position: {x: 60, y: 60}
+    },
+    {
+        name: "Cygnus",
+        stars: [
+            {x: 37, y: 15}, {x: 22, y: 30}, {x: 37, y: 45},
+            {x: 52, y: 30}, {x: 37, y: 60}
+        ],
+        connections: [
+            [0, 2], [1, 3], [2, 4]
+        ],
+        position: {x: 15, y: 50}
+    }
+];
+
+
+       function createConstellations() {
+    const container = document.getElementById('constellation');
+    container.innerHTML = '';
+    
+    // Add galaxy dust background
+    const galaxyDust = document.createElement('div');
+    galaxyDust.className = 'galaxy-dust';
+    container.appendChild(galaxyDust);
+    
+    // Add milky way
+    const milkyWay = document.createElement('div');
+    milkyWay.className = 'milky-way';
+    container.appendChild(milkyWay);
+    
+    // Add random shining stars
+    for (let i = 0; i < 80; i++) {
+        const shiningStar = document.createElement('div');
+        shiningStar.className = 'shining-star';
+        shiningStar.style.left = Math.random() * 100 + '%';
+        shiningStar.style.top = Math.random() * 100 + '%';
+        shiningStar.style.animationDelay = Math.random() * 3 + 's';
+        shiningStar.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        container.appendChild(shiningStar);
+    }
+    
+    // Add shooting stars
+    for (let i = 0; i < 3; i++) {
+        const shootingStar = document.createElement('div');
+        shootingStar.className = 'shooting-star';
+        shootingStar.style.left = Math.random() * 100 + '%';
+        shootingStar.style.top = Math.random() * 100 + '%';
+        shootingStar.style.animationDelay = Math.random() * 8 + 's';
+        shootingStar.style.animationDuration = (Math.random() * 4 + 6) + 's';
+        container.appendChild(shootingStar);
+    }
+    
+    // Original constellation code
+    constellations.forEach(constellation => {
+        const constellationDiv = document.createElement('div');
+        constellationDiv.style.position = 'absolute';
+        constellationDiv.style.left = constellation.position.x + '%';
+        constellationDiv.style.top = constellation.position.y + '%';
+        
+        // Create stars
+        constellation.stars.forEach((star, index) => {
+            const starDiv = document.createElement('div');
+            starDiv.className = 'constellation-star';
+            starDiv.style.left = star.x + 'px';
+            starDiv.style.top = star.y + 'px';
+            starDiv.style.animationDelay = (index * 0.5) + 's';
+            constellationDiv.appendChild(starDiv);
+        });
+        
+        // Create connecting lines
+        constellation.connections.forEach(connection => {
+            const [start, end] = connection;
+            const startStar = constellation.stars[start];
+            const endStar = constellation.stars[end];
+            
+            const dx = endStar.x - startStar.x;
+            const dy = endStar.y - startStar.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            const line = document.createElement('div');
+            line.className = 'constellation-line';
+            line.style.left = startStar.x + 'px';
+            line.style.top = startStar.y + 'px';
+            line.style.width = length + 'px';
+            line.style.transform = `rotate(${angle}deg)`;
+            line.style.animationDelay = Math.random() * 4 + 's';
+            constellationDiv.appendChild(line);
+        });
+        
+        // Add constellation name
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'constellation-name';
+        nameDiv.textContent = constellation.name;
+        nameDiv.style.left = (constellation.stars[0].x - 20) + 'px';
+        nameDiv.style.top = (constellation.stars[0].y - 20) + 'px';
+        constellationDiv.appendChild(nameDiv);
+        
+        container.appendChild(constellationDiv);
+    });
+} 
+
+        // Theme toggle function
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (body.classList.contains('dark')) {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark Mode';
+            } else {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light Mode';
+            }
+        }
+
+        // File upload handler
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const messages = document.getElementById('messages');
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+                let fileIcon = '📄';
+                
+                // Set appropriate icon based on file type
+                if (file.type.startsWith('image/')) {
+                    fileIcon = '🖼️';
+                } else if (file.type.includes('pdf')) {
+                    fileIcon = '📕';
+                } else if (file.type.includes('doc')) {
+                    fileIcon = '📘';
+                } else if (file.type.includes('txt')) {
+                    fileIcon = '📝';
+                }
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <span class="space-emoji">🛸</span>
+                    </div>
+                    <div class="message-content">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                            <span style="font-size: 24px;">${fileIcon}</span>
+                            <div>
+                                <div style="font-weight: bold;">${fileName}</div>
+                                <div style="font-size: 12px; opacity: 0.8;">${fileSize}</div>
+                            </div>
+                        </div>
+                        File uploaded successfully! 📤
+                    </div>
+                `;
+                
+                messages.appendChild(messageDiv);
+                messages.scrollTop = messages.scrollHeight;
+                
+                // Clear the file input
+                event.target.value = '';
+            }
+        }
+
+        // Send message function
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const messages = document.getElementById('messages');
+            const messageText = input.value.trim();
+            
+            if (messageText) {
+                const spaceEmojis = ['🛸', '🚀', '🌟', '⭐', '🌙', '☄️'];
+                const randomEmoji = spaceEmojis[Math.floor(Math.random() * spaceEmojis.length)];
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <span class="space-emoji">${randomEmoji}</span>
+                    </div>
+                    <div class="message-content">
+                        ${messageText}
+                    </div>
+                `;
+                
+                messages.appendChild(messageDiv);
+                input.value = '';
+                
+                // Scroll to bottom
+                messages.scrollTop = messages.scrollHeight;
+                
+                // Auto-reply after 2 seconds
+                setTimeout(() => {
+                    const replyEmojis = ['🪐', '🌍', '🌟', '✨'];
+                    const replies = [
+                        "That's fascinating! Tell me more about your space adventures! 🌌",
+                        "Incredible! The universe is so vast and mysterious! 🌟",
+                        "Amazing discovery! What else have you seen out there? 🚀",
+                        "Wow! Space exploration is so exciting! ✨"
+                    ];
+                    
+                    const randomReplyEmoji = replyEmojis[Math.floor(Math.random() * replyEmojis.length)];
+                    const randomReply = replies[Math.floor(Math.random() * replies.length)];
+                    
+                    const replyDiv = document.createElement('div');
+                    replyDiv.className = 'message';
+                    replyDiv.innerHTML = `
+                        <div class="message-avatar">
+                            <span class="space-emoji">${randomReplyEmoji}</span>
+                        </div>
+                        <div class="message-content">
+                            ${randomReply}
+                        </div>
+                    `;
+                    
+                    messages.appendChild(replyDiv);
+                    messages.scrollTop = messages.scrollHeight;
+                }, 2000);
+            }
+        }
+
+        // Enter key to send message
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initialize
+        createConstellations();
+    </script>
+</body>
+</html>
