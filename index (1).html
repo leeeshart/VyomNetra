@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VyomNetra - Space Chat UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        /* Light mode styles */
+        body.light {
+            background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 50%, #F0F8FF 100%);
+            color: #2c3e50;
+        }
+
+        /* Dark mode styles */
+        body.dark {
+            background: linear-gradient(135deg, #0a0a1a 0%, #111128 50%, #1a0d4a 100%);
+            color: #e0e0e0;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Animated background elements */
+        .background-canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Constellation styles for dark mode */
+        .constellation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        .constellation-star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+        }
+
+        .constellation-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform-origin: left center;
+            animation: shimmer 4s infinite;
+        }
+
+        .constellation-name {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            animation: glow 2s infinite alternate;
+        }
+
+        /* Cloud styles for light mode */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+            opacity: 0.7;
+            animation: float-cloud 20s infinite linear;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+        }
+
+        .cloud1 {
+            width: 80px;
+            height: 30px;
+            top: 20%;
+            left: -100px;
+        }
+
+        .cloud1::before {
+            width: 50px;
+            height: 40px;
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud1::after {
+            width: 40px;
+            height: 35px;
+            top: -15px;
+            right: 10px;
+        }
+
+        .cloud2 {
+            width: 60px;
+            height: 25px;
+            top: 40%;
+            left: -80px;
+            animation-delay: -10s;
+        }
+
+        .cloud2::before {
+            width: 35px;
+            height: 30px;
+            top: -15px;
+            left: 8px;
+        }
+
+        .cloud2::after {
+            width: 30px;
+            height: 25px;
+            top: -10px;
+            right: 8px;
+        }
+
+        .cloud3 {
+            width: 100px;
+            height: 35px;
+            top: 60%;
+            left: -120px;
+            animation-delay: -15s;
+        }
+
+        .cloud3::before {
+            width: 60px;
+            height: 45px;
+            top: -25px;
+            left: 15px;
+        }
+
+        .cloud3::after {
+            width: 50px;
+            height: 40px;
+            top: -20px;
+            right: 15px;
+        }
+
+        .cloud4 {
+            width: 70px;
+            height: 28px;
+            top: 80%;
+            left: -90px;
+            animation-delay: -5s;
+        }
+
+        .cloud4::before {
+            width: 45px;
+            height: 35px;
+            top: -18px;
+            left: 12px;
+        }
+
+        .cloud4::after {
+            width: 35px;
+            height: 30px;
+            top: -12px;
+            right: 12px;
+        }
+
+        /* Animations */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+            100% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+        }
+
+        @keyframes float-cloud {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+        }
+
+        /* Hide clouds in dark mode and constellations in light mode */
+        body.dark .cloud {
+            display: none;
+        }
+
+        body.light .constellation {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .chat-title {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid;
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.light .theme-toggle {
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        body.dark .theme-toggle {
+            border-color: #74b9ff;
+            color: #74b9ff;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        /* Chat container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.sent {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        body.light .message-avatar {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid #3498db;
+        }
+
+        body.dark .message-avatar {
+            background: rgba(116, 185, 255, 0.1);
+            border: 2px solid #74b9ff;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        body.light .message-content {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+
+        body.dark .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(116, 185, 255, 0.2);
+        }
+
+        .message.sent .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Input area */
+        .input-area {
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        body.light .input-container {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+
+        body.dark .input-container {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(116, 185, 255, 0.2);
+        }
+
+        .file-upload-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #25D366;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .file-upload-btn:hover {
+            background: rgba(37, 211, 102, 0.1);
+            transform: scale(1.1);
+        }
+
+        body.light .file-upload-btn {
+            color: #25D366;
+        }
+
+        body.dark .file-upload-btn {
+            color: #00A884;
+        }
+
+        .file-upload-input {
+            display: none;
+        }
+
+        .message-input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: inherit;
+        }
+
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.light .message-input::placeholder {
+            color: rgba(44, 62, 80, 0.5);
+        }
+
+        .send-button {
+            background: #25D366;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        body.dark .send-button {
+            background: #00A884;
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Space emojis for avatars */
+        .space-emoji {
+            font-size: 24px;
+        }
+
+        /* Shining stars and galaxy effects */
+        .shining-star {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, #ffffff 0%, rgba(255, 255, 255, 0.8) 30%, transparent 70%);
+            border-radius: 50%;
+            animation: shine 3s infinite;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        .galaxy-dust {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse 800px 300px at 20% 30%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse 600px 200px at 80% 70%, rgba(72, 61, 139, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 400px 150px at 50% 50%, rgba(138, 43, 226, 0.08) 0%, transparent 50%);
+            animation: galaxyRotate 60s linear infinite;
+        }
+
+        .milky-way {
+            position: absolute;
+            width: 120%;
+            height: 30px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.05) 10%,
+                rgba(147, 112, 219, 0.1) 25%,
+                rgba(138, 43, 226, 0.15) 40%,
+                rgba(72, 61, 139, 0.2) 50%,
+                rgba(138, 43, 226, 0.15) 60%,
+                rgba(147, 112, 219, 0.1) 75%,
+                rgba(255, 255, 255, 0.05) 90%,
+                transparent 100%);
+            top: 40%;
+            left: -10%;
+            transform: rotate(-15deg);
+            animation: milkyWayFlow 40s linear infinite;
+            opacity: 0.6;
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: linear-gradient(45deg, #ffffff, #87CEEB);
+            border-radius: 50%;
+            box-shadow: 0 0 6px #ffffff, 0 0 12px #87CEEB;
+            animation: shootingStar 8s linear infinite;
+        }
+
+        .shooting-star::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(45deg, #ffffff, transparent);
+            transform: translate(-50%, -50%) rotate(45deg);
+            animation: shootingTail 8s linear infinite;
+        }
+
+        /* Animations */
+        @keyframes shine {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+                box-shadow: 0 0 5px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.5);
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 255, 255, 0.6);
+            }
+        }
+
+        @keyframes galaxyRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes milkyWayFlow {
+            0% { transform: rotate(-15deg) translateX(-20px); opacity: 0.6; }
+            50% { opacity: 0.8; }
+            100% { transform: rotate(-15deg) translateX(20px); opacity: 0.6; }
+        }
+
+        @keyframes shootingStar {
+            0% {
+                transform: translateX(-100px) translateY(-100px);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translateX(100vw) translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes shootingTail {
+            0% { width: 0; }
+            10% { width: 80px; }
+            90% { width: 100px; }
+            100% { width: 0; }
+        }
+
+        /* Mobile and Tablet Responsiveness */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .chat-title {
+                font-size: 20px;
+            }
+
+            .theme-toggle {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+
+            .chat-container {
+                padding: 0 15px;
+            }
+
+            .message-content {
+                max-width: 85%;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .message-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .input-container {
+                padding: 10px;
+            }
+
+            .message-input {
+                font-size: 14px;
+            }
+
+            .send-button {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px;
+            }
+
+            .chat-title {
+                font-size: 18px;
+            }
+
+            .theme-toggle {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .chat-container {
+                padding: 0 10px;
+            }
+
+            .messages {
+                padding: 15px 0;
+                gap: 15px;
+            }
+
+            .message-content {
+                max-width: 90%;
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+
+            .message-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+
+            .input-area {
+                padding: 15px;
+            }
+
+            .input-container {
+                padding: 8px;
+                gap: 10px;
+            }
+
+            .send-button,
+            .file-upload-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+        }
+
+        /* Additional space elements */
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: nebulaFloat 25s infinite;
+        }
+
+        .nebula1 {
+            width: 200px;
+            height: 150px;
+            background: radial-gradient(ellipse, rgba(138, 43, 226, 0.4) 0%, rgba(147, 112, 219, 0.2) 40%, transparent 70%);
+            top: 10%;
+            right: 20%;
+            animation-delay: -5s;
+        }
+
+        .nebula2 {
+            width: 180px;
+            height: 120px;
+            background: radial-gradient(ellipse, rgba(72, 61, 139, 0.4) 0%, rgba(123, 104, 238, 0.2) 40%, transparent 70%);
+            bottom: 20%;
+            left: 15%;
+            animation-delay: -12s;
+        }
+
+        .nebula3 {
+            width: 160px;
+            height: 100px;
+            background: radial-gradient(ellipse, rgba(65, 105, 225, 0.3) 0%, rgba(100, 149, 237, 0.15) 40%, transparent 70%);
+            top: 50%;
+            right: 10%;
+            animation-delay: -8s;
+        }
+
+        @keyframes nebulaFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(20px, -15px) scale(1.1); }
+            50% { transform: translate(-10px, 10px) scale(0.9); }
+            75% { transform: translate(15px, 20px) scale(1.05); }
+        }
+
+        body.light .nebula {
+            display: none;
+        }
+    </style>
+</head>
+<body class="dark">
+    <div class="container">
+        <!-- Animated Background -->
+        <div class="background-canvas">
+            <!-- Constellation elements (visible in dark mode) -->
+            <div class="constellation">
+                <!-- Stars -->
+                <div class="constellation-star" style="top: 15%; left: 20%;"></div>
+                <div class="constellation-star" style="top: 25%; left: 35%;"></div>
+                <div class="constellation-star" style="top: 18%; left: 45%;"></div>
+                <div class="constellation-star" style="top: 30%; left: 55%;"></div>
+                <div class="constellation-star" style="top: 20%; left: 70%;"></div>
+                
+                <div class="constellation-star" style="top: 45%; left: 15%;"></div>
+                <div class="constellation-star" style="top: 50%; left: 25%;"></div>
+                <div class="constellation-star" style="top: 60%; left: 40%;"></div>
+                <div class="constellation-star" style="top: 55%; left: 60%;"></div>
+                <div class="constellation-star" style="top: 65%; left: 75%;"></div>
+                
+                <div class="constellation-star" style="top: 75%; left: 20%;"></div>
+                <div class="constellation-star" style="top: 80%; left: 35%;"></div>
+                <div class="constellation-star" style="top: 85%; left: 50%;"></div>
+                <div class="constellation-star" style="top: 90%; left: 65%;"></div>
+
+                <!-- Constellation lines -->
+                <div class="constellation-line" style="top: 20%; left: 20%; width: 150px; transform: rotate(15deg);"></div>
+                <div class="constellation-line" style="top: 25%; left: 35%; width: 120px; transform: rotate(-10deg);"></div>
+                <div class="constellation-line" style="top: 55%; left: 15%; width: 180px; transform: rotate(25deg);"></div>
+                <div class="constellation-line" style="top: 80%; left: 35%; width: 140px; transform: rotate(-20deg);"></div>
+
+                <!-- Constellation names -->
+                <div class="constellation-name" style="top: 22%; left: 22%;">Orion</div>
+                <div class="constellation-name" style="top: 52%; left: 17%;">Ursa Major</div>
+                <div class="constellation-name" style="top: 82%; left: 42%;">Cassiopeia</div>
+
+                <!-- Shining stars -->
+                <div class="shining-star" style="top: 25%; left: 80%; animation-delay: -1s;"></div>
+                <div class="shining-star" style="top: 40%; left: 10%; animation-delay: -2s;"></div>
+                <div class="shining-star" style="top: 70%; left: 90%; animation-delay: -0.5s;"></div>
+                <div class="shining-star" style="top: 60%; left: 5%; animation-delay: -1.5s;"></div>
+
+                <!-- Galaxy dust -->
+                <div class="galaxy-dust"></div>
+
+                <!-- Milky Way -->
+                <div class="milky-way"></div>
+
+                <!-- Shooting stars -->
+                <div class="shooting-star" style="top: 20%; left: -50px; animation-delay: -3s;"></div>
+                <div class="shooting-star" style="top: 60%; left: -50px; animation-delay: -6s;"></div>
+
+                <!-- Nebulae -->
+                <div class="nebula nebula1"></div>
+                <div class="nebula nebula2"></div>
+                <div class="nebula nebula3"></div>
+            </div>
+
+            <!-- Cloud elements (visible in light mode) -->
+            <div class="cloud cloud1"></div>
+            <div class="cloud cloud2"></div>
+            <div class="cloud cloud3"></div>
+            <div class="cloud cloud4"></div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="chat-title">
+                <span class="space-emoji">🌌</span>
+                VyomNetra Space Chat
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="themeIcon">☀️</span>
+                <span id="themeText">Light</span>
+            </button>
+        </header>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <!-- Welcome message -->
+                <div class="message">
+                    <div class="message-avatar">
+                        <span class="space-emoji">🤖</span>
+                    </div>
+                    <div class="message-content">
+                        Welcome to VyomNetra! I'm your space assistant. How can I help you explore the cosmos today? 🚀
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">
+                        📎
+                    </button>
+                    <input type="file" id="fileInput" class="file-upload-input" accept="image/*,video/*,audio/*" onchange="handleFileUpload(event)">
+                    <input type="text" class="message-input" id="messageInput" placeholder="Type your space message..." onkeypress="handleKeyPress(event)">
+                    <button class="send-button" onclick="sendMessage()">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            console.log('Theme toggle clicked');
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            
+            if (body.classList.contains('dark')) {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark';
+            } else {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light';
+            }
+        }
+
+        // Message sending functionality
+        function sendMessage() {
+            console.log('Send message clicked');
+            const messageInput = document.getElementById('messageInput');
+            const messagesContainer = document.getElementById('messages');
+            const messageText = messageInput.value.trim();
+
+            if (messageText === '') {
+                console.log('Empty message, returning');
+                return;
+            }
+
+            console.log('Sending message:', messageText);
+
+            // Create user message
+            const userMessage = createMessageElement(messageText, true);
+            messagesContainer.appendChild(userMessage);
+
+            // Clear input
+            messageInput.value = '';
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Simulate bot response after a short delay
+            setTimeout(async () => {
+                const botResponse = await generateBotResponse(messageText);
+                const botMessage = createMessageElement(botResponse, false);
+                messagesContainer.appendChild(botMessage);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+        }
+
+        // Create message element
+        function createMessageElement(text, isSent) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : ''}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            
+            const avatarEmoji = isSent ? '🧑‍🚀' : '🤖';
+            avatar.innerHTML = `<span class="space-emoji">${avatarEmoji}</span>`;
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            content.textContent = text;
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+
+            return messageDiv;
+        }
+
+        // Comprehensive space knowledge database
+        const spaceKnowledge = {
+            constellations: {
+                'ursa major': "Ursa Major, also known as the Great Bear, is one of the most recognizable constellations in the northern sky. It contains the famous asterism called the Big Dipper (or Plough). The constellation includes several bright stars like Dubhe and Merak, which are pointer stars that help locate Polaris, the North Star. Ursa Major is visible year-round from most northern latitudes and has been important for navigation throughout history. 🐻⭐",
+                'ursa minor': "Ursa Minor, the Little Bear, contains Polaris (the North Star) at the tip of its tail. This constellation is crucial for navigation as Polaris sits almost directly above Earth's North Pole. The Little Dipper asterism is part of Ursa Minor, though it's fainter than its bigger cousin. 🐻✨",
+                'orion': "Orion, the Hunter, is one of the most prominent winter constellations. It features the famous Orion's Belt (three stars in a row), the bright red giant Betelgeuse, and the brilliant blue star Rigel. The Orion Nebula (M42) is a stellar nursery visible even with small telescopes, where new stars are being born! 🏹⭐",
+                'cassiopeia': "Cassiopeia looks like a 'W' or 'M' in the sky and represents the vain queen from Greek mythology. This circumpolar constellation is visible year-round from northern latitudes and helps locate other constellations. It's positioned opposite the Big Dipper across Polaris. 👑✨",
+                'andromeda': "Andromeda represents the chained princess from Greek mythology. This constellation is famous for containing the Andromeda Galaxy (M31), our nearest major galactic neighbor at 2.5 million light-years away. You can see this galaxy with the naked eye on dark nights! 🌌👸",
+            },
+            
+            planets: {
+                'mercury': "Mercury is the smallest planet and closest to the Sun. It has extreme temperature variations - scorching hot on the day side (427°C) and freezing cold on the night side (-173°C). A year on Mercury lasts only 88 Earth days, but a single day lasts 176 Earth days! 🌡️☀️",
+                'venus': "Venus is often called Earth's twin due to similar size, but it's actually a hellish world with surface temperatures of 462°C - hot enough to melt lead! Its thick atmosphere is mostly carbon dioxide, creating a runaway greenhouse effect. Venus rotates backwards compared to most planets. ♀️🔥",
+                'mars': "Mars, the Red Planet, gets its color from iron oxide (rust) on its surface. It has the largest volcano in the solar system (Olympus Mons) and evidence of ancient water flows. Mars has two small moons, Phobos and Deimos, and seasons similar to Earth due to its tilted axis. NASA and SpaceX plan human missions in the 2030s! 🔴🚀",
+                'jupiter': "Jupiter is the largest planet in our solar system - you could fit over 1,300 Earths inside it! It's a gas giant with a Great Red Spot storm larger than Earth that's been raging for centuries. Jupiter has over 80 moons, including four large ones discovered by Galileo: Io, Europa, Ganymede, and Callisto. 🪐⚡",
+                'saturn': "Saturn is famous for its stunning ring system made of ice and rock particles. It's the least dense planet - it would float in water if you had a bathtub big enough! Saturn has 83 known moons, including Titan which has lakes of liquid methane and Enceladus which has a subsurface ocean. 🪐💍",
+                'uranus': "Uranus is an ice giant that rotates on its side - its axis is tilted 98 degrees! This gives it extreme seasons lasting 21 years each. It has a faint ring system and 27 known moons. The planet appears blue-green due to methane in its atmosphere. ❄️🌀",
+                'neptune': "Neptune is the windiest planet with storms reaching speeds of 2,100 km/h - faster than the speed of sound on Earth! It's the most distant major planet and takes 165 years to orbit the Sun. Its largest moon Triton orbits backwards and likely came from the Kuiper Belt. 🌊💨",
+            },
+            
+            space_phenomena: {
+                'black hole': "Black holes are regions where gravity is so strong that nothing - not even light - can escape once it crosses the event horizon. They form when massive stars collapse. At the center is a singularity where our understanding of physics breaks down. We've actually photographed black holes using the Event Horizon Telescope! 🕳️⚫",
+                'neutron star': "Neutron stars are incredibly dense remnants of massive stars - a teaspoon would weigh about 6 billion tons! They're only about 20km wide but contain more mass than our Sun. Some rotate hundreds of times per second, creating pulsars that sweep beams of radiation across space. 💫⚡",
+                'supernova': "A supernova is the explosive death of a massive star, briefly outshining an entire galaxy! These explosions create and scatter heavy elements throughout the universe - the calcium in your bones and iron in your blood were forged in stellar explosions. Type Ia supernovae help us measure cosmic distances. 💥⭐",
+                'nebula': "Nebulae are vast clouds of gas and dust in space. Some are stellar nurseries where new stars are born (like the Eagle Nebula), others are the remains of dying stars (like the Ring Nebula). They come in beautiful colors due to different gases glowing under starlight. 🌈☁️",
+                'quasar': "Quasars are the most luminous objects in the universe - supermassive black holes actively feeding on matter. They can outshine entire galaxies and are so bright we can see them from billions of light-years away. They help us study the early universe. 💡🌌",
+            },
+            
+            space_missions: {
+                'apollo': "The Apollo program landed 12 humans on the Moon between 1969-1972. Apollo 11 was first, with Neil Armstrong and Buzz Aldrin walking on the lunar surface while Michael Collins orbited above. These missions brought back 842 pounds of Moon rocks and forever changed humanity's perspective. 🚀🌙",
+                'voyager': "The Voyager 1 and 2 spacecraft, launched in 1977, have traveled farther than any human-made objects. Voyager 1 entered interstellar space in 2012. They carry Golden Records with sounds and images from Earth - messages for any extraterrestrial life they might encounter. 🛸📀",
+                'hubble': "The Hubble Space Telescope has revolutionized astronomy since 1990, providing stunning images and groundbreaking discoveries. It orbits Earth every 97 minutes and has helped determine the age of the universe, discovered that cosmic expansion is accelerating, and found thousands of exoplanets. 🔭🌟",
+                'james webb': "The James Webb Space Telescope, launched in 2021, is the most powerful space telescope ever built. It observes in infrared light, allowing it to see the first galaxies that formed after the Big Bang and peer through cosmic dust to watch stars being born. 🔭✨",
+                'iss': "The International Space Station is humanity's outpost in space, orbiting Earth every 90 minutes at 408km altitude. It's been continuously occupied since 2000, hosting astronauts from many nations conducting experiments in microgravity. You can often see it pass overhead like a bright star! 🛰️🌍",
+            }
+        };
+
+        // Generate intelligent bot response
+        async function generateBotResponse(userMessage) {
+            try {
+                const response = await fetch('/api/space-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.response;
+                } else {
+                    throw new Error('Failed to get response from server');
+                }
+            } catch (error) {
+                console.error('Error fetching space data:', error);
+                // Fallback to a space-themed error message
+                return "🌌 I'm having trouble connecting to the space agencies right now, but here's a fascinating fact: The universe is about 13.8 billion years old and contains over 2 trillion galaxies! Every atom in your body was forged in the heart of a dying star - you are literally made of stardust! 🚀✨";
+            }
+        }
+
+        // Handle Enter key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const messagesContainer = document.getElementById('messages');
+            const fileName = file.name;
+            const fileType = file.type.split('/')[0];
+            
+            let fileMessage = '';
+            if (fileType === 'image') {
+                fileMessage = `📸 Shared an image: ${fileName}`;
+            } else if (fileType === 'video') {
+                fileMessage = `🎥 Shared a video: ${fileName}`;
+            } else if (fileType === 'audio') {
+                fileMessage = `🎵 Shared an audio file: ${fileName}`;
+            } else {
+                fileMessage = `📎 Shared a file: ${fileName}`;
+            }
+
+            const userMessage = createMessageElement(fileMessage, true);
+            messagesContainer.appendChild(userMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Bot response to file upload
+            setTimeout(() => {
+                const botResponse = "Great! I can see you've shared a file. While I can't process files directly, I'm always ready to chat about space and the universe! 🌟";
+                const botMessage = createMessageElement(botResponse, false);
+                messagesContainer.appendChild(botMessage);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+
+            // Clear the file input
+            event.target.value = '';
+        }
+
+        // Add more dynamic stars
+        function createDynamicStars() {
+            const constellation = document.querySelector('.constellation');
+            if (!constellation) return;
+
+            for (let i = 0; i < 20; i++) {
+                const star = document.createElement('div');
+                star.className = 'shining-star';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                constellation.appendChild(star);
+            }
+        }
+
+        // Initialize the application
+        function initializeApp() {
+            console.log('Initializing VyomNetra application...');
+            
+            // Set up event listeners
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', handleKeyPress);
+                console.log('Message input event listener added');
+            }
+            
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', handleFileUpload);
+                console.log('File input event listener added');
+            }
+            
+            // Initialize stars and animations
+            createDynamicStars();
+            
+            // Add some random shooting stars
+            setInterval(() => {
+                if (document.body.classList.contains('dark')) {
+                    const constellation = document.querySelector('.constellation');
+                    if (constellation) {
+                        const shootingStar = document.createElement('div');
+                        shootingStar.className = 'shooting-star';
+                        shootingStar.style.top = Math.random() * 50 + '%';
+                        shootingStar.style.left = '-50px';
+                        shootingStar.style.animationDelay = '0s';
+                        
+                        constellation.appendChild(shootingStar);
+                        
+                        // Remove after animation
+                        setTimeout(() => {
+                            if (shootingStar.parentNode) {
+                                shootingStar.parentNode.removeChild(shootingStar);
+                            }
+                        }, 8000);
+                    }
+                }
+            }, 15000);
+            
+            console.log('VyomNetra initialization complete!');
+        }
+        
+        // Ensure DOM is fully loaded before running functions
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing VyomNetra...');
+            
+            // Initialize the application
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
