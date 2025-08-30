@@ -36,7 +36,7 @@ except Exception as e:
 @app.route('/')
 def index():
     """Serve the main HTML file"""
-    return send_from_directory('.', 'index (1).html')
+    return send_from_directory('.', 'index.html')
 
 @app.route('/api/space-chat', methods=['POST'])
 def space_chat():
